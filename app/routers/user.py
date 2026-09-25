@@ -6,6 +6,8 @@ from app.schemas.user import UserCreate, UserLogin, UserResponse
 # Import your token generation tool
 from app.config.security import create_access_token
 from app.schemas.user import TokenResponse  # Import your new schema
+from app.config.security import get_current_user
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(
     prefix="/auth",  # Grouping our authentication endpoints together
@@ -73,20 +75,42 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
 #     }
 # Update your POST /login route:
 # <- Bind our new token validation model
+# @router.post("/login", response_model=TokenResponse)
+# def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
+#     db_user = db.query(User).filter(User.email == login_data.email).first()
+
+#     if not db_user or db_user.hashed_password != login_data.password:
+#         raise HTTPException(
+#             status_code=400, detail="Invalid email or password")
+
+#     #  GENERATE THE PASSPORT PAYLOAD DATA:
+#     # Pack up the public claims metadata we want our token string to carry
+#     token_payload = {"user_id": db_user.id, "email": db_user.email}
+#     jwt_token = create_access_token(data=token_payload)
+
+#     # Return the verified TokenResponse structure cleanly to the client network
+#     return {
+#         "access_token": jwt_token,
+#         "token_type": "bearer",
+#         "user": db_user
+#     }
+
 @router.post("/login", response_model=TokenResponse)
-def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == login_data.email).first()
+def login_user(
+    # 🔒 Swaps JSON parsing for Form Data parsing
+    login_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    # OAuth2PasswordRequestForm changes .email property to .username natively
+    db_user = db.query(User).filter(User.email == login_data.username).first()
 
     if not db_user or db_user.hashed_password != login_data.password:
         raise HTTPException(
             status_code=400, detail="Invalid email or password")
 
-    #  GENERATE THE PASSPORT PAYLOAD DATA:
-    # Pack up the public claims metadata we want our token string to carry
     token_payload = {"user_id": db_user.id, "email": db_user.email}
     jwt_token = create_access_token(data=token_payload)
 
-    # Return the verified TokenResponse structure cleanly to the client network
     return {
         "access_token": jwt_token,
         "token_type": "bearer",
@@ -97,7 +121,20 @@ def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
 # DIAGNOSTIC: VIEW ALL REGISTERED ACCOUNTS (GET)
 
 
+# @router.get("/profiles", response_model=list[UserResponse])
+# def view_all_saved_profiles(db: Session = Depends(get_db)):
+#     # This reaches directly into test.db and extracts every single user row
+#     return db.query(User).all()
+
+# 2. UPDATE YOUR GET PROFILES ROUTE:
 @router.get("/profiles", response_model=list[UserResponse])
-def view_all_saved_profiles(db: Session = Depends(get_db)):
-    # This reaches directly into test.db and extracts every single user row
+def view_all_saved_profiles(
+    db: Session = Depends(get_db),
+    # 🔒 NEW SECURITY LOCK INJECTED!
+    current_user: dict = Depends(get_current_user)
+):
+    # This print line is a great diagnostic tool—it will display who is accessing your tables in the terminal!
+    print(
+        f"[Security Gate] Authorized access granted to logged-in user: {current_user['email']}")
+
     return db.query(User).all()
