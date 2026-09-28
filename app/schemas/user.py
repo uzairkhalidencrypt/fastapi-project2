@@ -28,6 +28,23 @@ class UserResponse(BaseModel):
     country: str
 
 
+class ProductCreate(BaseModel):
+    name: str
+    price: float
+    stock: int
+
+
+class Productview(BaseModel):
+    name: str
+
+
+class ProductResponse(BaseModel):
+    id: int
+    name: str
+    price: float
+    stock: int
+
+
 class Config:
     from_attributes = True
 

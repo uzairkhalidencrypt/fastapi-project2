@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.config.database import SessionLocal
-from app.models.user import User
-from app.schemas.user import UserCreate, UserLogin, UserResponse
+from app.models.user import User, Product
+from app.schemas.user import ProductResponse, ProductCreate, Productview, UserCreate, UserLogin, UserResponse
 # Import your token generation tool
 from app.config.security import create_access_token
 from app.schemas.user import TokenResponse  # Import your new schema
@@ -97,7 +97,7 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=TokenResponse)
 def login_user(
-    # 🔒 Swaps JSON parsing for Form Data parsing
+    #  Swaps JSON parsing for Form Data parsing
     login_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
@@ -130,7 +130,7 @@ def login_user(
 @router.get("/profiles", response_model=list[UserResponse])
 def view_all_saved_profiles(
     db: Session = Depends(get_db),
-    # 🔒 NEW SECURITY LOCK INJECTED!
+    #  NEW SECURITY LOCK INJECTED!
     current_user: dict = Depends(get_current_user)
 ):
     # This print line is a great diagnostic tool—it will display who is accessing your tables in the terminal!
@@ -138,3 +138,23 @@ def view_all_saved_profiles(
         f"[Security Gate] Authorized access granted to logged-in user: {current_user['email']}")
 
     return db.query(User).all()
+
+
+@router.post("/products", response_model=ProductResponse, status_code=status.HTTP_201_CREATED)
+def create_product(product: ProductCreate, db: Session = Depends(get_db)):
+    new_product = Product(
+        name=product.name,
+        price=product.price,
+        stock=product.stock
+    )
+    db.add(new_product)
+    db.commit()
+    db.refresh(new_product)
+    return new_product
+
+
+@router.get("/productview", response_model=list[ProductResponse], status_code=status.HTTP_200_OK)
+def view_all_products(db: Session = Depends(get_db)):
+    # fetching
+    products = db.query(Product).all()
+    return products
