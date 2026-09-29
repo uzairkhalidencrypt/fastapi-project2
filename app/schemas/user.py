@@ -27,6 +27,9 @@ class UserResponse(BaseModel):
     email: str
     country: str
 
+    class Config:
+        from_attributes = True
+
 
 class ProductCreate(BaseModel):
     name: str
@@ -44,9 +47,8 @@ class ProductResponse(BaseModel):
     price: float
     stock: int
 
-
-class Config:
-    from_attributes = True
+    class Config:
+        from_attributes = True
 
 
 # 4. TOKEN RESPONSE GATE: The structure returned upon successful login
@@ -54,3 +56,21 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+
+    class Config:
+        from_attributes = True
+
+
+class MemoCreate(BaseModel):
+    title: str
+    content: str
+
+
+class MemoResponse(BaseModel):
+    id: int
+    title: str
+    content: str
+    owner_id: int
+
+    class Config:
+        from_attributes = True

@@ -1,3 +1,4 @@
+import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -38,6 +39,12 @@ app.include_router(user_router)
 # Basic health-check root route
 
 
-@app.get("/")
-def root_health_check():
-    return {"status": "healthy", "architecture": "layered-multi-directory"}
+@app.get("/health")
+def advanced_system_health():
+    return {
+        "status": "online",
+        "runtime_environment": f"Python {sys.version.split()[0]}",
+        "database_engine": "SQLite 3",
+        "architecture_framework": "Layered Multi-Directory REST API",
+        "active_modules": ["Authentication", "Product Inventory", "Isolated Private Memos"]
+    }

@@ -1,5 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float
 from app.config.database import Base
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 
 class User(Base):
@@ -21,3 +23,13 @@ class Product(Base):
     name = Column(String, index=True)
     price = Column(Float, index=True)
     stock = Column(Integer, index=True)
+
+
+class Memo(Base):
+    __tablename__ = "memos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    content = Column(String)
+    # Foreign key hold the id of who wrote it
+    owner_id = Column(Integer, ForeignKey("users.id"))

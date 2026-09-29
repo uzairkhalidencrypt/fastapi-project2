@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.config.database import SessionLocal
-from app.models.user import User, Product
-from app.schemas.user import ProductResponse, ProductCreate, Productview, UserCreate, UserLogin, UserResponse
+from app.models.user import User, Product, Memo
+from app.schemas.user import ProductResponse, ProductCreate, Productview, UserCreate, UserLogin, UserResponse, MemoCreate, MemoResponse
 # Import your token generation tool
 from app.config.security import create_access_token
 from app.schemas.user import TokenResponse  # Import your new schema
@@ -147,6 +147,7 @@ def create_product(product: ProductCreate, db: Session = Depends(get_db)):
         price=product.price,
         stock=product.stock
     )
+
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
@@ -158,3 +159,75 @@ def view_all_products(db: Session = Depends(get_db)):
     # fetching
     products = db.query(Product).all()
     return products
+
+
+# product search endpoint
+@router.get("/products/search", response_model=list[ProductResponse])
+def search_product(name: str, db: Session = Depends(get_db)):
+    """
+    Search for products by name using a URL Query Parameter.
+    Example: http://localhost:8000/auth/products/search?name=Keyboard
+    """
+    # Looks for any product name containing the search string (case-insensitive)
+    products = db.query(Product).filter(Product.name.ilike(f"%{name}%")).all()
+    return products
+
+# product deletion endpoint
+
+
+@router.delete("/products/{product_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["Products"])
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    db.delete(product)
+    db.commit()
+    return None
+
+
+@router.post("/memos", response_model=MemoResponse, status_code=status.HTTP_201_CREATED)
+def create_memo(memo_data: MemoCreate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    logged_in_user_id = current_user.get("user_id")
+    new_memo = Memo(
+        title=memo_data.title,
+        content=memo_data.content,
+        owner_id=logged_in_user_id
+    )
+    db.add(new_memo)
+    db.commit()
+    db.refresh(new_memo)
+    return new_memo
+
+# view only
+
+
+@router.get("/memos", response_model=list[MemoResponse])
+def view_memo(db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):  # Token valodatio guard
+    logged_in_user_id = current_user.get("user_id")
+    # fetch notes belonging to this specific user ID
+    personal_notes = db.query(Memo).filter(
+        Memo.owner_id == logged_in_user_id).all()
+
+    return personal_notes
+
+# memo deletion endpoint
+
+
+@router.delete("/memos/{memo_id}")
+def delete_my_memo(memo_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    logged_in_user_id = current_user.get("user_id")
+
+    # Find the memo row
+    db_memo = db.query(Memo).filter(Memo.id == memo_id).first()
+    if not db_memo:
+        raise HTTPException(status_code=404, detail="Memo not found")
+
+    # 🛡️ THE SECURITY ISOLATION LOCK: Prevent users from deleting someone else's notes!
+    if db_memo.owner_id != logged_in_user_id:
+        raise HTTPException(
+            status_code=403, detail="Not authorized to delete this memo")
+
+    db.delete(db_memo)
+    db.commit()
+    return {"status": "Success", "message": f"Memo ID {memo_id} successfully deleted."}
