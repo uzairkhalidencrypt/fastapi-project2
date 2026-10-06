@@ -8,6 +8,8 @@ from app.config.security import create_access_token
 from app.schemas.user import TokenResponse  # Import your new schema
 from app.config.security import get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
+import asyncio
+from fastapi import BackgroundTasks
 
 router = APIRouter(
     prefix="/auth",  # Grouping our authentication endpoints together
@@ -95,14 +97,35 @@ def signup_user(user: UserCreate, db: Session = Depends(get_db)):
 #         "user": db_user
 #     }
 
+# @router.post("/login", response_model=TokenResponse)
+# def login_user(
+#     # option B Swaps JSON parsing for Form Data parsing
+#     login_data: OAuth2PasswordRequestForm = Depends(),
+#     db: Session = Depends(get_db)
+# ):
+#     # OAuth2PasswordRequestForm changes .email property to .username natively
+#     db_user = db.query(User).filter(User.email == login_data.username).first()
+
+#     if not db_user or db_user.hashed_password != login_data.password:
+#         raise HTTPException(
+#             status_code=400, detail="Invalid email or password")
+
+#     token_payload = {"user_id": db_user.id, "email": db_user.email}
+#     jwt_token = create_access_token(data=token_payload)
+
+#     return {
+#         "access_token": jwt_token,
+#         "token_type": "bearer",
+#         "user": db_user
+#     }
+
 @router.post("/login", response_model=TokenResponse)
-def login_user(
-    #  Swaps JSON parsing for Form Data parsing
-    login_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    # OAuth2PasswordRequestForm changes .email property to .username natively
-    db_user = db.query(User).filter(User.email == login_data.username).first()
+def login_user(login_data: UserLogin, db: Session = Depends(get_db)):
+    """
+      Option A: Clean JSON login gate matching standard React payloads.
+    """
+    # Looks up the account row dataset using the unique email parameter
+    db_user = db.query(User).filter(User.email == login_data.email).first()
 
     if not db_user or db_user.hashed_password != login_data.password:
         raise HTTPException(
@@ -231,3 +254,28 @@ def delete_my_memo(memo_id: int, db: Session = Depends(get_db), current_user: di
     db.delete(db_memo)
     db.commit()
     return {"status": "Success", "message": f"Memo ID {memo_id} successfully deleted."}
+
+
+# ... existing router setup (router = APIRouter()) ...
+
+async def heavy_email_delivery(email: str, country: str):
+    print(
+        f"[Event Loop] Starting heavy background email delivery to {email} ({country})...")
+    # Simulate a non-blocking network wait (e.g., talking to an external email server)
+    await asyncio.sleep(7)
+    print(f"[Event Loop] Task complete! Email sent to {email}.")
+
+
+@router.post("/trigger-event-loop-demo")
+async def trigger_demo(payload: dict, background_tasks: BackgroundTasks):
+    user_email = payload.get("email", "unknown@email.com")
+    user_country = payload.get("country", "Unknown")
+
+    # Hand the slow function off to Uvicorn's event loop immediately
+    background_tasks.add_task(heavy_email_delivery, user_email, user_country)
+
+    # The server returns a success response instantly WITHOUT waiting 7 seconds!
+    return {
+        "status": "Success",
+        "message": f"Task delegated to backend event loop for {user_email}. Check your terminal logs!"
+    }
