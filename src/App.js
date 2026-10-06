@@ -35,6 +35,7 @@ function App() {
   };
 
   // 2. Login User
+  // 2. Login User (Perfect Alignment with Pydantic Schema)
   const handleLogin = async (e) => {
     e.preventDefault();
     setStatusMessage('Verifying credentials...');
@@ -42,24 +43,31 @@ function App() {
     try {
       const response = await fetch("http://localhost:8000/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword })
+        headers: {
+          "Content-Type": "application/json"
+        },
+        // Send 'email' instead of 'username' to clear the validation error
+        body: JSON.stringify({
+          email: loginEmail,
+          password: loginPassword
+        })
       });
 
       const data = await response.json();
       if (response.ok) {
-        setStatusMessage("Account Login successfully! Secure Token generated.");
+        setStatusMessage("Account Login successful! Secure Token generated.");
         localStorage.setItem("user_session_token", data.access_token);
         setLoginEmail('');
         setLoginPassword('');
-        fetchMemos();
+        fetchMemos(); // Automatically fetches your notes after log in
       } else {
-        setStatusMessage(`Login Error : ${data.detail}`);
+        setStatusMessage(`Login Error: ${typeof data.detail === 'object' ? JSON.stringify(data.detail) : data.detail}`);
       }
     } catch (err) {
       setStatusMessage("Network Connection failed.");
     }
   };
+
 
   // 3. Save Note to Database
   const handleCreateMemos = async (e) => {
@@ -166,6 +174,33 @@ function App() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* EVENT LOOP EXPERIMENTAL LABORATORY */}
+      <div style={{ border: '1px solid #bfdbfe', padding: '20px', borderRadius: '8px', background: '#eff6ff', marginBottom: '40px' }}>
+        <h3 style={{ color: '#1e40af', marginTop: 0 }}>⚡ Event Loop Laboratory</h3>
+        <p style={{ fontSize: '14px', color: '#1e3a8a' }}>
+          Clicking this will trigger a fake 7-second background process on the backend. Watch how the UI stays active and the server responds immediately!
+        </p>
+        <button
+          onClick={async () => {
+            setStatusMessage("Firing asynchronous event loop payload...");
+            try {
+              const res = await fetch("http://localhost:8000/auth/trigger-event-loop-demo", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: "testuser@gmail.com", country: "Pakistan" })
+              });
+              const data = await res.json();
+              setStatusMessage(`Backend Event Loop Response: ${data.message}`);
+            } catch (err) {
+              setStatusMessage("Failed to reach lab route.");
+            }
+          }}
+          style={{ padding: '10px 14px', background: '#2563eb', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 'bold', borderRadius: '4px' }}
+        >
+          Fire Non-Blocking Lab Request
+        </button>
       </div>
 
       {/* PORTAL SIGNAL BAR */}
