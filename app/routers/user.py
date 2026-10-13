@@ -11,10 +11,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 import asyncio
 from fastapi import BackgroundTasks
 
-router = APIRouter(
-    prefix="/auth",  # Grouping our authentication endpoints together
-    tags=["Authentication"]
-)
+# Keep it completely clean since main.py already handles the /auth prefix globally
+router = APIRouter()
 
 
 def get_db():
@@ -246,7 +244,7 @@ def delete_my_memo(memo_id: int, db: Session = Depends(get_db), current_user: di
     if not db_memo:
         raise HTTPException(status_code=404, detail="Memo not found")
 
-    # 🛡️ THE SECURITY ISOLATION LOCK: Prevent users from deleting someone else's notes!
+    #  THE SECURITY ISOLATION LOCK: Prevent users from deleting someone else's notes!
     if db_memo.owner_id != logged_in_user_id:
         raise HTTPException(
             status_code=403, detail="Not authorized to delete this memo")
@@ -279,3 +277,22 @@ async def trigger_demo(payload: dict, background_tasks: BackgroundTasks):
         "status": "Success",
         "message": f"Task delegated to backend event loop for {user_email}. Check your terminal logs!"
     }
+
+
+@router.get("/admin/users", response_model=list[UserResponse], tags=["Admin Controls"])
+def get_all_users(
+    db: Session = Depends(get_db),
+    # This injects the matching security check!
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Validates the incoming JWT bearer header passed by your React app, 
+    and checks authorization parameters before pulling records from SQLite.
+    """
+    # Optional Admin enforcement logic:
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=403, detail="Operation restricted to administrators.")
+
+    users = db.query(User).all()
+    return users

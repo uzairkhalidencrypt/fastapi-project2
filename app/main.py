@@ -34,7 +34,9 @@ app.add_middleware(
 )
 
 # 4. Bind our modular user router endpoints to the system
-app.include_router(user_router)
+# Change this line in main.py:
+app.include_router(user_router, prefix="/auth", tags=["Authentication"])
+
 
 # Basic health-check root route
 
