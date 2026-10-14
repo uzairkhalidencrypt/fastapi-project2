@@ -47,7 +47,7 @@ class Order(Base):
     shipping_address = Column(Text, nullable=False)
     # Pending, Shipped, Delivered
     status = Column(String, nullable=False, default="Pending")
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.now)
 
     # RELATIONS
     # Connects the master invoice line back to the target User profile
