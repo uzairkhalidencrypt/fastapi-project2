@@ -7,6 +7,7 @@ from app.models.user import User, Product, Order, OrderItem
 from app.schemas.user import OrderCreateIn, OrderOut       # Your step 2 schemas
 from app.config.security import get_current_user
 from app.config.database import SessionLocal
+from app.schemas.user import OrderCreateIn, OrderOut
 
 router = APIRouter()
 

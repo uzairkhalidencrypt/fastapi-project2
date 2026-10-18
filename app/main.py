@@ -11,12 +11,15 @@ from app.models.user import User
 # Import our modular controller endpoints router
 from app.routers.user import router as user_router
 
+#  Import your independent router sub-modules
+from app.routers import product, order
+
 # 1. Instruct SQLAlchemy to inspect our models and build the table grids inside test.db
 Base.metadata.create_all(bind=engine)
 
 # 2. Initialize the core FastAPI Application instance
 app = FastAPI(
-    title="Layered Full-Stack API",
+    title="Asynchronous E-Commerce Engine",
     description="A clean, enterprise-ready architecture utilizing modular routers and ORM models."
 )
 
@@ -37,6 +40,8 @@ app.add_middleware(
 # Change this line in main.py:
 app.include_router(user_router, prefix="/auth", tags=["Authentication"])
 
+app.include_router(product.router)
+app.include_router(order.router)
 
 # Basic health-check root route
 
