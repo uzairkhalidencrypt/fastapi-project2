@@ -74,3 +74,13 @@ class OrderItem(Base):
 
     # Connects the item breakdown row to the matching product entity row parameters
     product = relationship("Product")
+
+
+class TestProducts(Base):
+    __tablename__ = "test_products"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    title = Column(String, index=True)
+    price = Column(Float, index=True)
+    quantity = Column(Integer, index=True)

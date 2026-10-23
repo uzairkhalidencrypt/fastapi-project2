@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends
+from app.models.user import User
 
 # 1. THE ARCHITECTURE CONFIGURATION KEYS
 # In production, keep this string completely random and hidden in a .env file!

@@ -120,3 +120,19 @@ class OrderOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class TestProductCreate(BaseModel):
+
+    name: str
+    title: str
+    price: float
+    quantity: int
+
+
+class TestProductResponse(BaseModel):
+    id: int
+    name: str
+    title: str
+    price: float
+    quantity: int

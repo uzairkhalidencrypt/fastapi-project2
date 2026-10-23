@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.config.database import SessionLocal
-from app.models.user import User, Product, Memo
-from app.schemas.user import ProductResponse, ProductCreate, Productview, UserCreate, UserLogin, UserResponse, MemoCreate, MemoResponse
+from app.models.user import User, Product, Memo, TestProducts
+from app.schemas.user import ProductResponse, ProductCreate, Productview, UserCreate, UserLogin, UserResponse, MemoCreate, MemoResponse, TestProductResponse, TestProductCreate
 # Import your token generation tool
 from app.config.security import create_access_token
 from app.schemas.user import TokenResponse  # Import your new schema
@@ -296,3 +296,55 @@ def get_all_users(
 
     users = db.query(User).all()
     return users
+
+
+@router.post("/testproducts", response_model=TestProductResponse, status_code=status.HTTP_201_CREATED)
+def create_testproduct(product: TestProductCreate, db: Session = Depends(get_db)):
+    new_testproduct = TestProducts(
+        name=product.name,
+        price=product.price,
+        quantity=product.quantity,
+        title=product.title
+    )
+    db.add(new_testproduct)
+    db.commit()
+    db.refresh(new_testproduct)
+    return new_testproduct
+
+
+@router.get("/testproducts/view", response_model=list[TestProductResponse], status_code=status.HTTP_200_OK)
+def view_testproducts(db: Session = Depends(get_db)):
+    Products = db.query(TestProducts).all()
+    return Products
+
+
+@router.delete("/testproducts/{testproduct_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_testproducts(testproduct_id: int, db: Session = Depends(get_db)):
+    testproduct = db.query(TestProducts).filter(
+        TestProducts.id == testproduct_id).first()
+    if not testproduct:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    db.delete(testproduct)
+    db.commit()
+    return None
+
+
+@router.put("/testproducts/{testproduct_id}", response_model=TestProductResponse, status_code=status.HTTP_200_OK)
+def update_testproduct(testproduct_id: int, product: TestProductResponse, db: Session = Depends(get_db)):
+
+    existing_product = db.query(TestProducts).filter(
+        TestProducts.id == testproduct_id).first()
+
+    if not existing_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    existing_product.name = product.name
+    existing_product.price = product.price
+    existing_product.quantity = product.quantity
+    existing_product.title = product.title
+
+    db.commit()
+    db.refresh(existing_product)
+
+    return existing_product
