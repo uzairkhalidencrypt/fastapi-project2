@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+// import { Link } from "react-router-dom";
 
 function Cal() {
 
@@ -58,10 +58,10 @@ function Cal() {
     ];
     return (
         <div style={{ maxWidth: '300px', margin: 'auto', fontFamily: 'sans-serif' }}>
-            <nav>
+            {/* <nav>
                 <Link to="/cal">Cal</Link> |{" "}
                 <Link to="/timer">Timer</Link> |{" "}
-            </nav>
+            </nav> */}
             <div style={{
                 background: '#333',
                 color: '#fff',

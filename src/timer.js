@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-function Timer() {
+function Timer({ setHideLayout }) {
     const [seconds, setSeconds] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
+    useEffect(() => {
+        setHideLayout(false);
+        return () => setHideLayout(true);
+    }, [setHideLayout])
 
     useEffect(() => {
 
@@ -20,8 +24,8 @@ function Timer() {
         setIsPaused(!isPaused);
 
     };
-    console.log("Seconds:", seconds);
-    console.log("Is paused?:", isPaused);
+    // console.log("Seconds:", seconds);
+    // console.log("Is paused?:", isPaused);
 
 
     return (
