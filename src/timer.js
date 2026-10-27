@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-function Timer({ setHideLayout }) {
+function Timer() {
     const [seconds, setSeconds] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
-    useEffect(() => {
-        setHideLayout(false);
-        return () => setHideLayout(true);
-    }, [setHideLayout])
+    // useEffect(() => {
+    //     setHideLayout(false);
+    //     return () => setHideLayout(true);
+    // }, [setHideLayout])
 
     useEffect(() => {
 
